@@ -8,7 +8,7 @@ import cvxpy as cvx
 
 class State:
     def __init__(self, prices, P_max=None):
-        n,m = prices.shape
+        n, m = prices.shape
         self.mu = cvx.Variable(name="mu", nonneg=True)
         self.s = cvx.Variable(m, name="s")
         self.P_max = P_max or 10
@@ -20,16 +20,16 @@ class State:
     def shape(self):
         return self.prices.shape
 
-
     @property
     def p_centered(self):
         return self.prices @ self.s - self.mu
 
-
     def iteration(self, num=10, **kwargs):
-
         objective = cvx.Maximize(self._grad @ self.p_centered)
-        constraints = [cvx.abs(self.p_centered) <= 1.0, self.prices @ cvx.abs(self.s) <= self.P_max]
+        constraints = [
+            cvx.abs(self.p_centered) <= 1.0,
+            self.prices @ cvx.abs(self.s) <= self.P_max,
+        ]
         prob = cvx.Problem(objective, constraints)
 
         for _ in range(num):
@@ -44,19 +44,19 @@ class State:
 
         returns the gradient of g at pk
         """
-        #grad_g = np.zeros(pk.shape)
+        # grad_g = np.zeros(pk.shape)
         self._grad.value = np.zeros(self._grad.shape)
-        self._grad.value[0] = pk[0]-pk[1]
-        self._grad.value[-1] = pk[-1]-pk[-2]
-        self._grad.value[1:-1] = 2*pk[1:-1] - pk[:-2] - pk[2:]
-        self._grad.value = 2*self._grad.value
+        self._grad.value[0] = pk[0] - pk[1]
+        self._grad.value[-1] = pk[-1] - pk[-2]
+        self._grad.value[1:-1] = 2 * pk[1:-1] - pk[:-2] - pk[2:]
+        self._grad.value = 2 * self._grad.value
 
-        #return 2*self._grad
+        # return 2*self._grad
 
-        #return 2*grad_g
+        # return 2*grad_g
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     file = Path(__file__).parent / "resources" / "price.csv"
 
     # period for training
