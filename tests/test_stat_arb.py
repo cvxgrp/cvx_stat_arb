@@ -30,20 +30,20 @@ def stat_arb_group(prices_train):
     return construct_stat_arbs(prices_train, K=10, P_max=10,\
         spread_max=1, M=None, solver="ECOS", seed=1)
 
-def test_stat_arb_constructor(stat_arb_group):
+def test_stat_arb_constructor(stat_arb_group, resource_dir):
 
     assets = pd.Series(stat_arb_group.stat_arbs[0].assets).astype(float)
     mu = stat_arb_group.stat_arbs[0].mu
 
-    assets_test = pd.read_csv("resources/stat_arb_assets.csv", index_col=0).squeeze().astype(float)
-    mu_test = pd.read_csv("resources/stat_arb_mu.csv", index_col=0).squeeze()
+    assets_test = pd.read_csv(resource_dir / "stat_arb_assets.csv", index_col=0).squeeze().astype(float)
+    mu_test = pd.read_csv(resource_dir / "stat_arb_mu.csv", index_col=0).squeeze()
 
     pd.testing.assert_series_equal(assets, assets_test, check_names=False)
     assert np.allclose(mu, mu_test)
 
 
 def test_stat_arb_trading(stat_arb_group, prices_val, prices_test,\
-     prices_train_val):
+     prices_train_val, resource_dir):
 
     # Simple linear trading strategy
     stat_arbs_validated = stat_arb_group.validate(prices_val,
@@ -52,7 +52,7 @@ def test_stat_arb_trading(stat_arb_group, prices_val, prices_test,\
 
     # Portfolio holdings
     holdings = portfolio.stocks * portfolio.prices
-    holdings_test = pd.read_csv("resources/holdings.csv", index_col=0, header=0, parse_dates=True)
+    holdings_test = pd.read_csv(resource_dir / "holdings.csv", index_col=0, header=0, parse_dates=True)
     pd.testing.assert_frame_equal(holdings, holdings_test)
 
 
@@ -62,9 +62,9 @@ def test_stat_arb_trading(stat_arb_group, prices_val, prices_test,\
     total_profit = m_p.total_profit
     sr_profit = m_p.sr_profit
 
-    daily_profit_test = pd.read_csv("resources/daily_profit.csv", index_col=0, header=0, parse_dates=True).squeeze()
-    total_profit_test = pd.read_csv("resources/total_profit.csv", index_col=0, header=0, parse_dates=True).squeeze()
-    sr_profit_test = pd.read_csv("resources/sr_profit.csv", index_col=0, header=0, parse_dates=True).squeeze()
+    daily_profit_test = pd.read_csv(resource_dir / "daily_profit.csv", index_col=0, header=0, parse_dates=True).squeeze()
+    total_profit_test = pd.read_csv(resource_dir / "total_profit.csv", index_col=0, header=0, parse_dates=True).squeeze()
+    sr_profit_test = pd.read_csv(resource_dir / "sr_profit.csv", index_col=0, header=0, parse_dates=True).squeeze()
 
     pd.testing.assert_series_equal(daily_profit, daily_profit_test, check_names=False)
     assert np.allclose(total_profit, total_profit_test)
