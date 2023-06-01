@@ -2,7 +2,6 @@
 # from cvx.stat_arb.ccp import construct_stat_arb
 
 
-
 # def filter_stat_arbs(all_stat_arbs, prices_train, prices_val, prices_test,\
 #      cutoff=1.05, SR_cutoff=3):
 
@@ -29,7 +28,7 @@
 #             if metrics_train.sr_profit>SR_cutoff and\
 #                 metrics_val.sr_profit is not None\
 #                 and metrics_val.sr_profit>SR_cutoff:
-            
+
 #                 # Refit with validation data
 #                 p_init = stat_arb.evaluate(prices_train_val).values.reshape(-1,1)
 #                 P = prices_train_val[stat_arb.assets.keys()]
@@ -38,8 +37,8 @@
 
 #                 # Don't enter position if it goes out of bounds on first day
 #                 if (stat_arb_refit.evaluate(prices_test)-stat_arb_refit.mu).abs()[0]\
-#                     >= cutoff: 
-#                     non_traded_stat_arbs.append(stat_arb_refit) 
+#                     >= cutoff:
+#                     non_traded_stat_arbs.append(stat_arb_refit)
 #                 else:
 #                     # print(1)
 #                     metrics = stat_arb_refit.metrics(prices_test, cutoff=cutoff)

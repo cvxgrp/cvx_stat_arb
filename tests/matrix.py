@@ -15,7 +15,7 @@ class State:
         self.s = cvx.Variable((self.shape[1], num), name="s")
         self.P_max = P_max or 10
         # self._grad = np.zeros((num,self.shape[0]))
-        self._grad = cvx.Parameter((num,self.shape[0]))
+        self._grad = cvx.Parameter((num, self.shape[0]))
 
     @property
     def shape(self):
@@ -29,7 +29,10 @@ class State:
         # self.update_grad(self.price_centered.value.T)
 
         objective = cvx.Maximize(cvx.trace(self._grad @ self.price_centered))
-        constraints = [cvx.abs(self.price_centered) <= 1.0, self.prices @ cvx.abs(self.s) <= self.P_max]
+        constraints = [
+            cvx.abs(self.price_centered) <= 1.0,
+            self.prices @ cvx.abs(self.s) <= self.P_max,
+        ]
         prob = cvx.Problem(objective, constraints)
 
         for _ in range(num):
@@ -56,7 +59,7 @@ class State:
         self._grad.value = 2 * self._grad.value
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     file = Path(__file__).parent / "resources" / "price.csv"
 
     # period for training
