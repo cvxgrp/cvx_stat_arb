@@ -130,7 +130,7 @@ def _construct_stat_arb(
 
     obj_old, obj_new = 1, 10
     i = 0
-    while np.linalg.norm(obj_new - obj_old) / obj_old > 1e-3 and i < 5:
+    while np.linalg.norm(obj_new - obj_old) / obj_old > 1e-3: # and i < 2:
         state.iterate()
         if state.prob.status == "optimal":
             obj_old = obj_new
@@ -407,6 +407,10 @@ class StatArbGroup:
     """
 
     stat_arbs: list
+
+    # # overwrite add function
+    # def __add__(self, other):
+    #     return StatArbGroup(self.stat_arbs + other.stat_arbs)
 
     def metrics(self, prices: pd.DataFrame, cutoff: float = 1):
         all_profits_daily = []
