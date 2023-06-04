@@ -18,16 +18,13 @@ def test_build_with_weights(prices):
     equity = (
         portfolio.equity.sum(axis=1)
         .dropna()
-        .loc[[pd.Timestamp("2013-01-01"), pd.Timestamp("2013-01-02")]]
-    )
+        .loc[[pd.Timestamp("2013-01-01"), pd.Timestamp("2013-01-02")]])
 
     pd.testing.assert_series_equal(
         equity,
         pd.Series(
             index=[pd.Timestamp("2013-01-01"), pd.Timestamp("2013-01-02")],
-            data=[3347.56, 3373.80],
-        ),
-    )
+            data=[3347.56, 3373.80],),)
 
 
 def test_multiply(prices):

@@ -8,7 +8,7 @@ from cvx.simulator.metrics import Metrics
 
 if __name__ == "__main__":
     prices = pd.read_csv(
-        "resources/price.csv", index_col=0, header=0, parse_dates=True
+        "tests/resources/price.csv", index_col=0, header=0, parse_dates=True
     ).ffill()
     prices_train, prices_val, prices_test = (
         prices.iloc[:300],
@@ -25,18 +25,18 @@ if __name__ == "__main__":
     assets = pd.Series(stat_arb_group.stat_arbs[0].assets)
     mu = pd.Series(stat_arb_group.stat_arbs[0].mu)
 
-    assets.to_csv("resources/stat_arb_assets.csv")
-    mu.to_csv("resources/stat_arb_mu.csv")
+    assets.to_csv("tests/resources/stat_arb_assets.csv")
+    mu.to_csv("tests/resources/stat_arb_mu.csv")
 
     # Simple linear trading strategy
     stat_arbs_validated = stat_arb_group.validate(
         prices_val, prices_train_val, 1.05, -10
     )
-    portfolio = stat_arbs_validated.construct_porfolio(prices_test, 1.05)
+    portfolio = stat_arbs_validated.construct_portfolio(prices_test, 1.05)
 
     # Portfolio holdings
     holdings = portfolio.stocks * portfolio.prices
-    holdings.to_csv("resources/holdings.csv")
+    holdings.to_csv("tests/resources/holdings.csv")
 
     # Portfolio performance
     m_p = Metrics(portfolio.profit)
@@ -44,6 +44,6 @@ if __name__ == "__main__":
     total_profit = pd.Series(m_p.total_profit)
     sr_profit = pd.Series(m_p.sr_profit)
 
-    daily_profit.to_csv("resources/daily_profit.csv")
-    total_profit.to_csv("resources/total_profit.csv")
-    sr_profit.to_csv("resources/sr_profit.csv")
+    daily_profit.to_csv("tests/resources/daily_profit.csv")
+    total_profit.to_csv("tests/resources/total_profit.csv")
+    sr_profit.to_csv("tests/resources/sr_profit.csv")

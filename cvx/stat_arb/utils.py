@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def plot_all_portfolios(stat_arbs, data_train, data_val, data_test):
@@ -16,9 +17,12 @@ def plot_all_portfolios(stat_arbs, data_train, data_val, data_test):
 
         c = cs[i % len(cs)]
 
-        plt.plot(stat_arb.evaluate(data_train) - stat_arb.mu, c=c)
-        plt.plot(stat_arb.evaluate(data_val) - stat_arb.mu, c=c)
-        plt.plot(stat_arb.evaluate(data_test) - stat_arb.mu, c=c)
+        data_concat = pd.concat([data_train, data_val, data_test], axis=0)
+        plt.plot(stat_arb.evaluate(data_concat) - stat_arb.mu, c=c)
+
+        # plt.plot(stat_arb.evaluate(data_train) - stat_arb.mu, c=c)
+        # plt.plot(stat_arb.evaluate(data_val) - stat_arb.mu, c=c)
+        # plt.plot(stat_arb.evaluate(data_test) - stat_arb.mu, c=c)
     plt.axvline(data_val.index[0], color="k", label="train->val", linewidth=1)
     plt.axvline(data_test.index[0], color="k", label="val->test", linewidth=1)
 

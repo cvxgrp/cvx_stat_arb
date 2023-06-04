@@ -62,7 +62,7 @@ def test_stat_arb_trading(
     stat_arbs_validated = stat_arb_group.validate(
         prices_val, prices_train_val, 1.05, -10
     )
-    portfolio = stat_arbs_validated.construct_porfolio(prices_test, 1.05)
+    portfolio = stat_arbs_validated.construct_portfolio(prices_test, 1.05)
 
     # Portfolio holdings
     holdings = portfolio.stocks * portfolio.prices

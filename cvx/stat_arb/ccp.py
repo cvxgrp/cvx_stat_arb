@@ -4,11 +4,17 @@ import pandas as pd
 import cvxpy as cp
 from functools import partial
 import multiprocessing as mp
-from tqdm import tqdm
+from tqdm import tqdm, trange
 import time
+import pickle
 
 from cvx.simulator.metrics import Metrics
 from cvx.simulator.portfolio import EquityPortfolio
+
+with open('../data/sector_to_asset.pkl', 'rb') as f:
+    sector_to_asset = pickle.load(f)
+with open('../data/asset_to_sector.pkl', 'rb') as f:
+    asset_to_sector = pickle.load(f)
 
 
 def evaluate_solver(prices, P_max, spread_max, solver, seed=1, M=None):
@@ -24,6 +30,13 @@ def evaluate_solver(prices, P_max, spread_max, solver, seed=1, M=None):
     state.iterate()
     return state.prob
 
+def construct_stat_arbs_parallel(args, **kwargs):
+    """
+    Call this when using of imap_unordered in multiprocessing
+
+    param args: tuple
+    """
+    return construct_stat_arbs(*args, **kwargs)
 
 def construct_stat_arbs(
     prices,
@@ -34,7 +47,7 @@ def construct_stat_arbs(
     mu_init=None,
     seed=None,
     M=None,
-    verbose=True,
+    parallel=False,
     **kwargs
 ):
     """ 
@@ -71,18 +84,38 @@ def construct_stat_arbs(
         [M] * K,
     )
 
-    pool = mp.Pool()
     all_stat_arbs = []
-    if verbose:
+
+    # TODO: remove parallelization??? 
+    if parallel:
+        pool = mp.Pool()
+        # if verbose_arb:
         iterator = tqdm(
             pool.imap(partial(_construct_stat_arbs_helper, **kwargs), all_args), total=K
         )
+        # else:
+        #     iterator = pool.imap(partial(_construct_stat_arbs_helper, **kwargs), all_args)
+        for stat_arb in iterator:
+            all_stat_arbs.append(stat_arb)
+
+        pool.close()
+        pool.join()
+
     else:
-        iterator = pool.imap(partial(_construct_stat_arbs_helper, **kwargs), all_args)
-    for stat_arb in iterator:
-        all_stat_arbs.append(stat_arb)
-    pool.close()
-    pool.join()
+        for i in range(K):
+            all_stat_arbs.append(
+                _construct_stat_arb(
+                    prices,
+                    P_max=P_max,
+                    spread_max=spread_max,
+                    s_init=s_init,
+                    mu_init=mu_init,
+                    seed=all_seeds[i],
+                    M=M,
+                    **kwargs
+                )
+            )
+    
 
     return StatArbGroup(all_stat_arbs)
 
@@ -112,9 +145,32 @@ def _construct_stat_arb(
     # Drop nan columns in prices; allows for missing data
     prices = prices.dropna(axis=1)
 
+
     if M is not None:
         # Find M random assets
-        assets = np.random.choice(prices.columns, M, replace=False)
+        # TODO: how to choose M assets?
+        # Sectors
+        # Choose sector with probability proportional to number of assets in
+        # sector
+        # sector_sizes = np.array([len(v) for v in sector_to_asset.values()])
+        # sector_probs = sector_sizes / sector_sizes.sum()
+        # sector = np.random.choice(list(sector_to_asset.keys()), 1, p=sector_probs)[0]
+
+        
+
+
+        sector = np.random.choice(list(sector_to_asset.keys()), 1)[0]
+        assets = sector_to_asset[sector]
+        while len(assets)<M:
+            sector = np.random.choice(list(sector_to_asset.keys()), 1)[0]
+            # sector = np.random.choice(list(sector_to_asset.keys()), 1, p=sector_probs)[0]
+            assets += sector_to_asset[sector]
+            assets = list(set(assets))
+        if len(assets)>M:
+            assets = np.random.choice(assets, M, replace=False)
+
+
+        # assets = np.random.choice(prices.columns, M, replace=False)
         prices = prices[assets]
 
     # Scale prices; remember to scale back later
@@ -168,117 +224,6 @@ def _construct_stat_arb(
     stat_arb = state.build()
 
     return stat_arb
-
-
-# class State_vectorized:
-#     """
-#     Helper class for constructing stat arb using the convex-concave procedure\
-#         in a vectorized manner
-#     """
-#     def __init__(self, prices, K, P_max=None, spread_max=1):
-#         self.T, self.n = prices.shape
-#         self.K = K
-#         self.s = cp.Variable((self.n,self.K), name="s")
-#         self.mu = cp.Variable((1,self.K), name="mu", nonneg=True)
-#         self.p = cp.Variable((self.T, self.K), name="p")
-#         self.P_max = P_max # allow for P_max=0 for second pass
-#         self.prices = prices
-#         self.spread_max = spread_max
-#         self.P_bar = prices.mean(axis=0).values.reshape(-1,1)
-#         # self.prices = self.prices / self.P_bar.T
-
-#         # Construct linearized convex-concave problem
-#         self.grad_g = cp.Parameter((self.T, self.K), name="grad_g")
-
-#         self.obj = cp.Maximize(cp.trace(self.grad_g.T @ self.p))
-
-#         self.cons = [cp.abs(self.p-self.mu) <= self.spread_max]
-#         self.cons += [self.p == self.prices.values@self.s]
-#         if self.P_max is not None:
-#             self.cons += [cp.abs(self.s).T @ self.P_bar <= self.P_max]
-
-#         self.prob = cp.Problem(self.obj, self.cons)
-
-#         # Solve once for speedup later
-#         print(1)
-#         self.grad_g.value = np.zeros((self.T, self.K))
-#         self.prob.solve(solver="ECOS", verbose=False)
-#         print(2)
-
-#         # For debugging
-#         self.solve_times = []
-
-
-#     @property
-#     def assets(self):
-#         return list(self.prices.columns)
-
-#     @property
-#     def shape(self):
-#         return self.prices.shape
-
-
-#     def reset(self):
-#         """
-#         Resets to random feasible point
-#         """
-#         self.s = cp.Variable((self.n,self.K), name="s")
-
-#         s = np.random.normal(0,1,(self.n,self.K))
-#         s_at_P_bar = np.abs(s).T@self.P_bar # will be Kx1; s is nxK
-#         if self.P_max is not None:
-#             s = s / s_at_P_bar.T * self.P_max # scale s to be feasible
-
-#         mu = np.abs(np.random.normal(0,1, size=(1,self.K)))
-
-#         scale = np.abs(self.prices.values@s - mu).max()
-
-#         s = s / scale
-#         mu = mu / scale
-
-#         self.s.value = s
-#         self.mu.value = mu
-
-
-#     def iterate(self, solver="ECOS"):
-#         """
-#         Performs one iteration of the convex concave procedure
-#         """
-
-#         # Update p_centered and grad_g
-#         p = self.prices.values @ self.s.value
-#         self.grad_g.value = self._get_grad_g(p)
-
-#         # Solve problem
-#         start = time.time()
-#         self.prob.solve(solver=solver, verbose=False, ignore_dpp=True)
-#         end = time.time()
-#         print(end-start)
-#         self.solve_times.append(end-start)
-
-
-#         return self
-
-#     @staticmethod
-#     def _get_grad_g(pk):
-#         """
-#         param pk: TxK array of current portfolio evolutions
-
-#         returns the gradients of g at pk
-#         """
-#         grad_g = np.zeros(pk.shape)
-#         grad_g[0,:] = pk[0,:]-pk[1,:]
-#         grad_g[-1, :] = pk[-1, :]-pk[-2,:]
-#         grad_g[1:-1, :] = 2*pk[1:-1,:] - pk[:-2,:] - pk[2:,:]
-
-#         return 2*grad_g
-
-#     def build(self):
-
-#         assets_dict = dict(zip(self.assets, self.s.value))
-#         stat_arb = StatArb(assets=assets_dict, mu=self.mu.value)
-
-#         return stat_arb
 
 
 class _State:
@@ -399,6 +344,9 @@ class _State:
 
         return stat_arb
 
+def _flatten(list_of_lists):
+    return list(set([item for sublist in list_of_lists for item in sublist]))
+
 
 @dataclass(frozen=True)
 class StatArbGroup:
@@ -408,9 +356,9 @@ class StatArbGroup:
 
     stat_arbs: list
 
-    # # overwrite add function
-    # def __add__(self, other):
-    #     return StatArbGroup(self.stat_arbs + other.stat_arbs)
+    @property
+    def assets_names(self):
+        return _flatten([stat_arb.asset_names for stat_arb in self.stat_arbs])
 
     def metrics(self, prices: pd.DataFrame, cutoff: float = 1):
         all_profits_daily = []
@@ -432,6 +380,8 @@ class StatArbGroup:
         prices_train_val: pd.DataFrame,
         cutoff: float = 1,
         SR_cutoff: float = 3,
+        profit_target = None,
+        P_max: float = None,
     ):
         """
         validates stat arbs on validation set (prices_val) and refits on
@@ -448,17 +398,18 @@ class StatArbGroup:
         for stat_arb in self.stat_arbs:
             if (
                 set(stat_arb.asset_names) not in assets
-            ):  # We don't want duplicates of the same stat arb TODO: is this check necessary?
-                if stat_arb.validate(prices_val, cutoff, SR_cutoff):
+            ):  # We don't want duplicates of the same stat arb TODO: is this check too harsh?
+                if stat_arb.validate(prices_val, cutoff, SR_cutoff, profit_target=profit_target):
                     stat_arb_refit = stat_arb.refit(
-                        prices_train_val[stat_arb.asset_names]
+                        prices_train_val[stat_arb.asset_names],
+                        P_max=P_max
                     )
                     stat_arbs_success.append(stat_arb_refit)
                     assets.append(set(stat_arb.asset_names))
 
         return StatArbGroup(stat_arbs_success)
 
-    def construct_porfolio(self, prices: pd.DataFrame, cutoff: float = 1):
+    def construct_portfolio(self, prices: pd.DataFrame, cutoff: float = 1):
         """
         Constructs portfolio from stat arbs
         """
@@ -467,14 +418,26 @@ class StatArbGroup:
         if not self.stat_arbs:
             return None
 
+        assert set(self.assets_names).issubset(
+            prices.columns
+        ), "Stat arb assets not in prices"
+
+        prices = prices[self.assets_names]
+
         # Initialize portfolio
-        stocks0 = self.stat_arbs[0].get_positions(prices, cutoff=cutoff)
-        portfolio = EquityPortfolio(prices, stocks=stocks0)
+        portfolio = None
 
         # Add other stat arbs to portfolio
-        for stat_arb in self.stat_arbs[1:]:
-            stocks = stat_arb.get_positions(prices, cutoff=cutoff)
-            portfolio += EquityPortfolio(prices, stocks=stocks)
+        for stat_arb in self.stat_arbs:
+            prices_temp = prices[stat_arb.asset_names]
+            stocks = stat_arb.get_positions(prices_temp, cutoff=cutoff)
+            if np.sum(stocks.values) == 0:
+                continue
+            if portfolio is None:
+                portfolio = EquityPortfolio(prices_temp, stocks=stocks, initial_cash=1) # TODO: make init cash flexible
+
+            else: 
+                portfolio += EquityPortfolio(prices_temp, stocks=stocks, initial_cash=1) # TODO: make init cash flexible
 
         return portfolio
 
@@ -503,12 +466,12 @@ class StatArb:
             value += prices[asset] * position
         return value
 
-    def refit(self, prices: pd.DataFrame):
-        """ "
+    def refit(self, prices: pd.DataFrame, P_max=None):
+        """ 
         returns refitted stat arb
         """
 
-        return _construct_stat_arb(prices, s_init=self.s, mu_init=self.mu)
+        return _construct_stat_arb(prices, s_init=self.s, mu_init=self.mu, P_max=P_max)
 
     @property
     def s(self):
@@ -568,7 +531,7 @@ class StatArb:
         positions.columns = self.asset_names
         return positions
 
-    def validate(self, prices, cutoff, SR_target=None):
+    def validate(self, prices, cutoff, SR_target=None, profit_target=None, return_target=10):
         """
         Validates stat arb on validation set (prices) and refits
 
@@ -576,14 +539,41 @@ class StatArb:
         param cutoff: max deviance from stat arb mean
         param SR_target: (minimum) target sharpe ratio over validation set
         """
-        m = self.metrics(prices, cutoff)
-
-        if m is None:
+        ### Make sure at least two assets
+        if self.n < 2:
+            return False
+        
+        ### Make sure stat arb surives validation set
+        if self.get_q(prices, cutoff, exit_last=False)[-1]==0:
             return False
 
+        # prices_temp = prices[self.asset_names]
+        # stocks = self.get_positions(prices_temp, cutoff=cutoff)
+        # portfolio = EquityPortfolio(prices_temp, stocks=stocks, initial_cash=1)
+        # returns = portfolio.nav.pct_change().dropna()
+
+        # if returns.mean() * 252 < return_target:
+        #     return False
+        
+
+        ### Makes sure stat arb is profitable
+        m = self.metrics(prices, cutoff, exit_last=False)
+        if m is None:
+            return False
+        
+        # if self.
+
+        # Highe enough Sharpe Ratio
         if SR_target is not None:
             if m.sr_profit < SR_target:
                 return False
+
+        # High enough profit
+        if profit_target is not None:
+            # if m.total_profit < profit_target:
+            if m.total_profit < profit_target:
+                return False
+        
 
         return True
 
