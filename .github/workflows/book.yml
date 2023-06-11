@@ -32,7 +32,7 @@ jobs:
         with:
           os: ${{ runner.os }}
           python-version: '3.10'
-          kernel: "statarb"
+          kernel: "simulator"
 
   book:
     runs-on: "ubuntu-latest"
