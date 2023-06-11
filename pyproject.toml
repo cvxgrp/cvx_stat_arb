@@ -9,11 +9,12 @@ packages = [{include = "cvx"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 numpy = "^1.24.2"
-cvxpy-base = "*"
+cvxpy = "*"
+pandas = "*"
 #pandas = "^2.0.0"
-matplotlib = "^3.7.1"
-clarabel = "^0.4.1"
-cvxsimulator = "0.2.3"
+#matplotlib = "^3.7.1"
+#clarabel = "^0.4.1"
+cvxsimulator = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "7.1.3"
