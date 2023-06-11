@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ccp &mdash; cvxmarkowitz Documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.jpeg"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> cvxmarkowitz
+            <img src="../_static/logo.jpeg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">cvxmarkowitz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      <li>ccp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ccp</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span> <span class="nn">cvxpy</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">cvx.stat_arb.metrics</span> <span class="kn">import</span> <span class="n">Metrics</span>
+<span class="kn">from</span> <span class="nn">cvx.stat_arb.portfolio</span> <span class="kn">import</span> <span class="n">build_portfolio</span>
+
+
+<div class="viewcode-block" id="evaluate_solver"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.evaluate_solver">[docs]</a><span class="k">def</span> <span class="nf">evaluate_solver</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">P_max</span><span class="p">,</span> <span class="n">spread_max</span><span class="p">,</span> <span class="n">solver</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">M</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Find M random assets</span>
+        <span class="n">assets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span><span class="p">[</span><span class="n">assets</span><span class="p">]</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">_State</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">P_max</span><span class="o">=</span><span class="n">P_max</span><span class="p">,</span> <span class="n">spread_max</span><span class="o">=</span><span class="n">spread_max</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">iterate</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">prob</span></div>
+
+
+<div class="viewcode-block" id="construct_stat_arbs"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.construct_stat_arbs">[docs]</a><span class="k">def</span> <span class="nf">construct_stat_arbs</span><span class="p">(</span>
+    <span class="n">prices</span><span class="p">,</span>
+    <span class="n">K</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">P_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">spread_max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">s_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">mu_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">M</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;MOSEK&quot;</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">all_seeds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">K</span><span class="p">),</span> <span class="n">K</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="n">all_args</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">prices</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">P_max</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">spread_max</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">s_init</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">mu_init</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">,</span>
+        <span class="n">all_seeds</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">M</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">solver</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">pool</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">()</span>
+    <span class="n">all_stat_arbs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">iterator</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span><span class="n">construct_stat_arb_helper</span><span class="p">,</span> <span class="n">all_args</span><span class="p">),</span> <span class="n">total</span><span class="o">=</span><span class="n">K</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">iterator</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span><span class="n">construct_stat_arb_helper</span><span class="p">,</span> <span class="n">all_args</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">stat_arb</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+        <span class="n">all_stat_arbs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stat_arb</span><span class="p">)</span>
+    <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">all_stat_arbs</span></div>
+
+
+<div class="viewcode-block" id="construct_stat_arb_helper"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.construct_stat_arb_helper">[docs]</a><span class="k">def</span> <span class="nf">construct_stat_arb_helper</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Call this when using of imap_unordered in multiprocessing</span>
+
+<span class="sd">    param args: tuple of arguments to pass to construct_stat_arb</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">construct_stat_arb</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="construct_stat_arb"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.construct_stat_arb">[docs]</a><span class="k">def</span> <span class="nf">construct_stat_arb</span><span class="p">(</span>
+    <span class="n">prices</span><span class="p">,</span>
+    <span class="n">P_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">spread_max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">s_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">mu_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">M</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;MOSEK&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># Drop nan columns in prices; allows for missing data</span>
+    <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">M</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Find M random assets</span>
+        <span class="n">assets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span><span class="p">[</span><span class="n">assets</span><span class="p">]</span>
+
+    <span class="c1"># Scale prices; remember to scale back later</span>
+    <span class="n">P_bar</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span> <span class="o">/</span> <span class="n">P_bar</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">_State</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">P_max</span><span class="o">=</span><span class="n">P_max</span><span class="p">,</span> <span class="n">spread_max</span><span class="o">=</span><span class="n">spread_max</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">s_init</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">mu_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">s_init</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">mu_init</span>
+
+    <span class="n">obj_old</span><span class="p">,</span> <span class="n">obj_new</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">obj_new</span> <span class="o">-</span> <span class="n">obj_old</span><span class="p">)</span> <span class="o">/</span> <span class="n">obj_old</span> <span class="o">&gt;</span> <span class="mf">1e-3</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">iterate</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">prob</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;optimal&quot;</span><span class="p">:</span>
+            <span class="n">obj_old</span> <span class="o">=</span> <span class="n">obj_new</span>
+            <span class="n">obj_new</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">prob</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solver failed... resetting&quot;</span><span class="p">)</span>
+            <span class="n">obj_old</span><span class="p">,</span> <span class="n">obj_new</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># Second pass</span>
+    <span class="k">if</span> <span class="n">P_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">s_times_P_bar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="o">*</span> <span class="n">state</span><span class="o">.</span><span class="n">P_bar</span>
+        <span class="n">s_at_P_bar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">state</span><span class="o">.</span><span class="n">P_bar</span>
+        <span class="n">non_zero_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s_times_P_bar</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-2</span> <span class="o">*</span> <span class="n">s_at_P_bar</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Scale back prices for second pass</span>
+        <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span> <span class="o">*</span> <span class="n">P_bar</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">prices_new</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">non_zero_inds</span><span class="p">]</span>
+
+        <span class="n">s_init</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">non_zero_inds</span><span class="p">]</span>
+        <span class="n">mu_init</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">value</span>
+
+        <span class="k">return</span> <span class="n">construct_stat_arb</span><span class="p">(</span>
+            <span class="n">prices_new</span><span class="p">,</span>
+            <span class="n">P_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">spread_max</span><span class="o">=</span><span class="n">spread_max</span><span class="p">,</span>
+            <span class="n">s_init</span><span class="o">=</span><span class="n">s_init</span><span class="p">,</span>
+            <span class="n">mu_init</span><span class="o">=</span><span class="n">mu_init</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Scale s and return stat arb</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">P_bar</span>
+    <span class="n">stat_arb</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">stat_arb</span></div>
+
+
+<div class="viewcode-block" id="State_vectorized"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.State_vectorized">[docs]</a><span class="k">class</span> <span class="nc">State_vectorized</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper class for constructing stat arb using the convex-concave procedure\</span>
+<span class="sd">        in a vectorized manner</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">P_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">spread_max</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;p&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span> <span class="o">=</span> <span class="n">P_max</span>  <span class="c1"># allow for P_max=0 for second pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spread_max</span> <span class="o">=</span> <span class="n">spread_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_bar</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># self.prices = self.prices / self.P_bar.T</span>
+
+        <span class="c1"># Construct linearized convex-concave problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;grad_g&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Maximize</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cons</span> <span class="o">=</span> <span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spread_max</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cons</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">values</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cons</span> <span class="o">+=</span> <span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_bar</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cons</span><span class="p">)</span>
+
+        <span class="c1"># Solve once for speedup later</span>
+        <span class="nb">print</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s2">&quot;MOSEK&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># For debugging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve_times</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="State_vectorized.assets"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.State_vectorized.assets">[docs]</a>    <span class="k">def</span> <span class="nf">assets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="State_vectorized.shape"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.State_vectorized.shape">[docs]</a>    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">shape</span></div>
+
+<div class="viewcode-block" id="State_vectorized.reset"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.State_vectorized.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resets to random feasible point</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">))</span>
+        <span class="n">s_at_P_bar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_bar</span>  <span class="c1"># will be Kx1; s is nxK</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="n">s_at_P_bar</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span>  <span class="c1"># scale s to be feasible</span>
+
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">)))</span>
+
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">values</span> <span class="o">@</span> <span class="n">s</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">/</span> <span class="n">scale</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">mu</span></div>
+
+<div class="viewcode-block" id="State_vectorized.iterate"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.State_vectorized.iterate">[docs]</a>    <span class="k">def</span> <span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;MOSEK&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Performs one iteration of the convex concave procedure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Update p_centered and grad_g</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">values</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_grad_g</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+        <span class="c1"># Solve problem</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_dpp</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="State_vectorized._get_grad_g"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.State_vectorized._get_grad_g">[docs]</a>    <span class="k">def</span> <span class="nf">_get_grad_g</span><span class="p">(</span><span class="n">pk</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        param pk: TxK array of current portfolio evolutions</span>
+
+<span class="sd">        returns the gradients of g at pk</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">grad_g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pk</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">grad_g</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">pk</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">grad_g</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">pk</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">grad_g</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pk</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="p">:]</span>
+
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">grad_g</span></div>
+
+<div class="viewcode-block" id="State_vectorized.build"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.State_vectorized.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">assets_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">stat_arb</span> <span class="o">=</span> <span class="n">StatArb</span><span class="p">(</span><span class="n">assets</span><span class="o">=</span><span class="n">assets_dict</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stat_arb</span></div></div>
+
+
+<div class="viewcode-block" id="_State"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp._State">[docs]</a><span class="k">class</span> <span class="nc">_State</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper class for constructing stat arb using the convex-concave procedure</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">,</span> <span class="n">P_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">spread_max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;MOSEK&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;p&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span> <span class="o">=</span> <span class="n">P_max</span>  <span class="c1"># allow for P_max=0 for second pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spread_max</span> <span class="o">=</span> <span class="n">spread_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_bar</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span>
+        <span class="c1"># self.prices = self.prices / self.P_bar.T</span>
+
+        <span class="c1"># Construct linearized convex-concave problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;grad_g&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Maximize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cons</span> <span class="o">=</span> <span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spread_max</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cons</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">values</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cons</span> <span class="o">+=</span> <span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_bar</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Problem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cons</span><span class="p">)</span>
+
+        <span class="c1"># Solve once for speedup later</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># For debugging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve_times</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="_State.assets"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp._State.assets">[docs]</a>    <span class="k">def</span> <span class="nf">assets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="_State.shape"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp._State.shape">[docs]</a>    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">shape</span></div>
+
+<div class="viewcode-block" id="_State.reset"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp._State.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resets to random feasible point</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">s_at_P_bar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_bar</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="n">s_at_P_bar</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span>  <span class="c1"># scale s to be feasible</span>
+
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">values</span> <span class="o">@</span> <span class="n">s</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">/</span> <span class="n">scale</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">mu</span></div>
+
+<div class="viewcode-block" id="_State.iterate"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp._State.iterate">[docs]</a>    <span class="k">def</span> <span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Performs one iteration of the convex concave procedure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Update p_centered and grad_g</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">values</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_g</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_grad_g</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+        <span class="c1"># Solve problem</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solver failed, resetting...&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="_State._get_grad_g"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp._State._get_grad_g">[docs]</a>    <span class="k">def</span> <span class="nf">_get_grad_g</span><span class="p">(</span><span class="n">pk</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        param pk: Tx1 array of current portfolio evolution</span>
+
+<span class="sd">        returns the gradient of g at pk</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">grad_g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pk</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">grad_g</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">pk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">grad_g</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">pk</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">grad_g</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pk</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">pk</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">grad_g</span></div>
+
+<div class="viewcode-block" id="_State.build"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp._State.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">assets_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">stat_arb</span> <span class="o">=</span> <span class="n">StatArb</span><span class="p">(</span><span class="n">assets</span><span class="o">=</span><span class="n">assets_dict</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stat_arb</span></div></div>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="StatArbGroup"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbGroup">[docs]</a><span class="k">class</span> <span class="nc">StatArbGroup</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores a group of stat arb objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="StatArbGroup.stat_arbs"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbGroup.stat_arbs">[docs]</a>    <span class="n">stat_arbs</span><span class="p">:</span> <span class="nb">list</span></div>
+
+<div class="viewcode-block" id="StatArbGroup.metrics"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbGroup.metrics">[docs]</a>    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">all_profits_daily</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">stat_arb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat_arbs</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">stat_arb</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">all_profits_daily</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">daily_profit</span><span class="p">)</span>
+        <span class="c1"># do outer concat</span>
+        <span class="n">all_profits_daily</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">all_profits_daily</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">profits_daily</span> <span class="o">=</span> <span class="n">all_profits_daily</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">profits_daily</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">Metrics</span><span class="p">(</span><span class="n">daily_profit</span><span class="o">=</span><span class="n">profits_daily</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">m</span></div>
+
+<div class="viewcode-block" id="StatArbGroup.validate"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbGroup.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">prices_val</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">prices_train_val</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">SR_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        validates stat arbs on validation set (prices_val) and refits on</span>
+<span class="sd">        train+validation (prices_train_val)</span>
+
+<span class="sd">        param prices_val: validation set</span>
+<span class="sd">        param prices_train_val: train+validation set</span>
+<span class="sd">        param cutoff: max deviance from stat arb mean</span>
+<span class="sd">        param SR_cutoff: cutoff for sharpe ratio</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stat_arbs_success</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">assets</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">stat_arb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat_arbs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">stat_arb</span><span class="o">.</span><span class="n">asset_names</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">assets</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">stat_arb</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">prices_val</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">SR_cutoff</span><span class="p">):</span>
+                    <span class="n">stat_arb_refit</span> <span class="o">=</span> <span class="n">stat_arb</span><span class="o">.</span><span class="n">refit</span><span class="p">(</span>
+                        <span class="n">prices_train_val</span><span class="p">[</span><span class="n">stat_arb</span><span class="o">.</span><span class="n">asset_names</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">stat_arbs_success</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stat_arb_refit</span><span class="p">)</span>
+                    <span class="n">assets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">stat_arb</span><span class="o">.</span><span class="n">asset_names</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">StatArbGroup</span><span class="p">(</span><span class="n">stat_arbs_success</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StatArbGroup.construct_porfolio"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbGroup.construct_porfolio">[docs]</a>    <span class="k">def</span> <span class="nf">construct_porfolio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructs portfolio from stat arbs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># If no stat arbs, return None, i.e., no portfolio</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat_arbs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Initialize portfolio</span>
+        <span class="n">positions0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat_arbs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">)</span>
+        <span class="n">portfolio</span> <span class="o">=</span> <span class="n">build_portfolio</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">positions</span><span class="o">=</span><span class="n">positions0</span><span class="p">)</span>
+
+        <span class="c1"># Add other stat arbs to portfolio</span>
+        <span class="k">for</span> <span class="n">stat_arb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat_arbs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="n">stat_arb</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">)</span>
+            <span class="n">portfolio</span> <span class="o">+=</span> <span class="n">build_portfolio</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">positions</span><span class="o">=</span><span class="n">positions</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">portfolio</span></div></div>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="StatArb"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb">[docs]</a><span class="k">class</span> <span class="nc">StatArb</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stat arb class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="StatArb.assets"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.assets">[docs]</a>    <span class="n">assets</span><span class="p">:</span> <span class="nb">dict</span></div>
+<div class="viewcode-block" id="StatArb.mu"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.mu">[docs]</a>    <span class="n">mu</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="StatArb.__setitem__"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.__setitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__name</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">__value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">[</span><span class="n">__name</span><span class="p">]</span> <span class="o">=</span> <span class="n">__value</span></div>
+
+<div class="viewcode-block" id="StatArb.__getitem__"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StatArb.items"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="StatArb.evaluate"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">asset</span><span class="p">,</span> <span class="n">position</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">+=</span> <span class="n">prices</span><span class="p">[</span><span class="n">asset</span><span class="p">]</span> <span class="o">*</span> <span class="n">position</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="StatArb.refit"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.refit">[docs]</a>    <span class="k">def</span> <span class="nf">refit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;</span>
+<span class="sd">        returns refitted stat arb</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">construct_stat_arb</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">s_init</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="n">mu_init</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="StatArb.s"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.s">[docs]</a>    <span class="k">def</span> <span class="nf">s</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns the vector of positions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="StatArb.asset_names"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.asset_names">[docs]</a>    <span class="k">def</span> <span class="nf">asset_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns list of assets in StatArb</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="StatArb.n"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.n">[docs]</a>    <span class="k">def</span> <span class="nf">n</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns the number of assets</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StatArb.get_q"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.get_q">[docs]</a>    <span class="k">def</span> <span class="nf">get_q</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">exit_last</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns the vector of investments in stat arb based on trading strategy\</span>
+<span class="sd">            q_t = mu - p_t until |p_t-mu| &lt;= cutoff\</span>
+<span class="sd">                rest is zero</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="n">p</span>
+        <span class="n">q</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;q&quot;</span>
+        <span class="n">breaches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">cutoff</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">breaches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">exit_last</span><span class="p">:</span>
+                <span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">return</span> <span class="n">q</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">first_breach</span> <span class="o">=</span> <span class="n">breaches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">q</span><span class="p">[</span><span class="n">first_breach</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">return</span> <span class="n">q</span></div>
+
+<div class="viewcode-block" id="StatArb.get_positions"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.get_positions">[docs]</a>    <span class="k">def</span> <span class="nf">get_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">exit_last</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        computes the positions of each individual asset over time\</span>
+<span class="sd">            based on trading strategy\</span>
+<span class="sd">                q_t = mu - p_t until |p_t-mu| &lt;= cutoff\</span>
+<span class="sd">                rest is zero</span>
+<span class="sd">                positions = q_t*self.s</span>
+
+<span class="sd">        returns Txn, pandas DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_q</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">exit_last</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">q</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span>
+        <span class="n">positions</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">positions</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">asset_names</span>
+        <span class="k">return</span> <span class="n">positions</span></div>
+
+<div class="viewcode-block" id="StatArb.validate"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">SR_target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">SR_target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">sr_profit</span> <span class="o">&lt;</span> <span class="n">SR_target</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="StatArb.metrics"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArb.metrics">[docs]</a>    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">exit_last</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes metrics of stat arbs trading strategy\</span>
+<span class="sd">            q_t = mu - p_t until |p_t-mu| &gt;= cutoff</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get price evolution of portfolio</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_q</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">exit_last</span><span class="o">=</span><span class="n">exit_last</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># We never enter a position</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">price_changes</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+        <span class="n">previous_position</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">profits</span> <span class="o">=</span> <span class="n">previous_position</span> <span class="o">*</span> <span class="n">price_changes</span>
+
+        <span class="c1"># Set first row to NaN</span>
+        <span class="n">profits</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">return</span> <span class="n">Metrics</span><span class="p">(</span><span class="n">daily_profit</span><span class="o">=</span><span class="n">profits</span><span class="p">)</span>
+
+        <span class="c1"># profits_daily = port_values1-port_values0</span>
+
+        <span class="n">m</span> <span class="o">=</span> <span class="n">Metrics</span><span class="p">(</span><span class="n">daily_profit</span><span class="o">=</span><span class="n">profits_daily</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m</span></div></div>
+
+
+<span class="c1"># TODO: working on this...</span>
+<div class="viewcode-block" id="StatArbPortfolioManager"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbPortfolioManager">[docs]</a><span class="k">class</span> <span class="nc">StatArbPortfolioManager</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">prices</span><span class="p">,</span>
+        <span class="n">start_date</span><span class="p">,</span>
+        <span class="n">end_date</span><span class="p">,</span>
+        <span class="n">train_len</span><span class="p">,</span>
+        <span class="n">val_len</span><span class="p">,</span>
+        <span class="n">test_len</span><span class="p">,</span>
+        <span class="n">P_max</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">n_candidates</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        param prices: Txn, price matrix, pandas DataFrame</span>
+<span class="sd">        param P_max: scalar, max value of abs(s)@P_bar,\</span>
+<span class="sd">            where P_bar is the mean of P (row-wise)</span>
+<span class="sd">        param zero_inds: list of indices of s that should be zero</span>
+<span class="sd">        param n_candidates: int, number of candidates to try</span>
+<span class="sd">        param n_passes: int, number of passes to try</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">=</span> <span class="n">start_date</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_date</span> <span class="o">=</span> <span class="n">end_date</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_len</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">train_len</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_len</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">val_len</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_len</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">test_len</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_max</span> <span class="o">=</span> <span class="n">P_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span> <span class="o">=</span> <span class="n">n_candidates</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">portfolios</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj_vals</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="StatArbPortfolioManager.run"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbPortfolioManager.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_freq</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        rund backtest, managing a portfolio of stat arbs, looking for new stat arbs every update_freq days</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">update_freq</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">update_freq</span><span class="p">)</span>
+
+        <span class="n">prices_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_len</span>
+        <span class="p">]</span>
+        <span class="n">prices_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_len</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_len</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_len</span>
+        <span class="p">]</span>
+        <span class="n">prices_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_len</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_len</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_date</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Update start date</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">+</span> <span class="n">update_freq</span>
+
+        <span class="c1"># Get initial stat arb portfolios</span>
+        <span class="n">stat_arbs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_stat_arb_portfolios</span><span class="p">(</span><span class="n">prices_train</span><span class="p">)</span></div>
+
+        <span class="c1"># Construct initial portfolio</span>
+
+    <span class="c1"># def construct_portfolio(stat_arbs):</span>
+    <span class="c1">#     cutoff = 1.05</span>
+
+    <span class="c1">#     pos0 = traded_stat_arbs[0].get_positions(data_test, cutoff=cutoff,\</span>
+    <span class="c1">#         exit_last=True)</span>
+    <span class="c1">#     portfolio = build_portfolio(data_test, positions=pos0)</span>
+
+    <span class="c1">#     for stat_arb in traded_stat_arbs[1:]:</span>
+    <span class="c1">#         pos_temp = stat_arb.get_positions(data_test, cutoff=cutoff, exit_last=True)</span>
+    <span class="c1">#         portfolio += build_portfolio(data_test, positions=pos_temp)</span>
+
+<div class="viewcode-block" id="StatArbPortfolioManager.get_stat_arb_portfolios"><a class="viewcode-back" href="../autoapi/ccp/index.html#ccp.StatArbPortfolioManager.get_stat_arb_portfolios">[docs]</a>    <span class="k">def</span> <span class="nf">get_stat_arb_portfolios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices_train</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns a list of stat arb portfolios</span>
+<span class="sd">            a stat arb portfolio is a StatArb class instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">all_data_train</span> <span class="o">=</span> <span class="p">[</span><span class="n">prices_train</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+        <span class="n">all_P_max</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P_max</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+        <span class="n">all_zero_inds</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+        <span class="n">all_i</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span><span class="p">)]</span>
+        <span class="n">all_n_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+        <span class="n">all_p_init</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+        <span class="n">all_s_init</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+        <span class="n">all_mu_init</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+        <span class="n">all_seeds</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_candidates</span>
+
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">()</span>
+        <span class="n">all_stat_arbs</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span>
+            <span class="n">construct_stat_arb</span><span class="p">,</span>
+            <span class="nb">zip</span><span class="p">(</span>
+                <span class="n">all_data_train</span><span class="p">,</span>
+                <span class="n">all_P_max</span><span class="p">,</span>
+                <span class="n">all_zero_inds</span><span class="p">,</span>
+                <span class="n">all_i</span><span class="p">,</span>
+                <span class="n">all_n_candidates</span><span class="p">,</span>
+                <span class="n">all_p_init</span><span class="p">,</span>
+                <span class="n">all_s_init</span><span class="p">,</span>
+                <span class="n">all_mu_init</span><span class="p">,</span>
+                <span class="n">all_seeds</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">all_stat_arbs</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>utils &mdash; cvxmarkowitz Documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.jpeg"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> cvxmarkowitz
+            <img src="../_static/logo.jpeg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">cvxmarkowitz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      <li>utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="plot_all_portfolios"><a class="viewcode-back" href="../autoapi/utils/index.html#utils.plot_all_portfolios">[docs]</a><span class="k">def</span> <span class="nf">plot_all_portfolios</span><span class="p">(</span><span class="n">stat_arbs</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="n">data_test</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    param stat_arbs: list of StatArb objects</span>
+<span class="sd">    param data_train: pandas dataframe with training data</span>
+<span class="sd">    param data_val: pandas dataframe with validation data</span>
+<span class="sd">    param data_test: pandas dataframe with test data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">stat_arb</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stat_arbs</span><span class="p">):</span>
+        <span class="c1"># s, mu = stat_arb.s, stat_arb.mu</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cs</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">cs</span><span class="p">)]</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">stat_arb</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data_train</span><span class="p">)</span> <span class="o">-</span> <span class="n">stat_arb</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">stat_arb</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data_val</span><span class="p">)</span> <span class="o">-</span> <span class="n">stat_arb</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">stat_arb</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data_test</span><span class="p">)</span> <span class="o">-</span> <span class="n">stat_arb</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">data_val</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;train-&gt;val&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">data_test</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;val-&gt;test&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">data_train</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_test</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
+        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="s2">&quot;k--&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;constraint&quot;</span><span class="p">,</span>
+        <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">data_train</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_test</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="determine_n_plots"><a class="viewcode-back" href="../autoapi/utils/index.html#utils.determine_n_plots">[docs]</a><span class="k">def</span> <span class="nf">determine_n_plots</span><span class="p">(</span><span class="n">candidate_stat_arbs</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">):</span>
+    <span class="n">n_plots</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">stat_arb</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">candidate_stat_arbs</span><span class="p">):</span>
+        <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">all_assets</span><span class="p">,</span> <span class="n">holdings</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">stat_arb</span><span class="o">.</span><span class="n">p</span><span class="p">,</span>
+            <span class="n">stat_arb</span><span class="o">.</span><span class="n">s</span><span class="p">,</span>
+            <span class="n">stat_arb</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span>
+            <span class="n">stat_arb</span><span class="o">.</span><span class="n">all_assets</span><span class="p">,</span>
+            <span class="n">stat_arb</span><span class="o">.</span><span class="n">holdings</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">data_new_val</span> <span class="o">=</span> <span class="n">data_val</span><span class="p">[</span><span class="n">all_assets</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data_new_val</span><span class="o">.</span><span class="n">values</span> <span class="o">@</span> <span class="n">s</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">cutoff</span><span class="p">:</span>
+            <span class="n">n_plots</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">n_plots</span></div>
+
+
+<div class="viewcode-block" id="fill_ax"><a class="viewcode-back" href="../autoapi/utils/index.html#utils.fill_ax">[docs]</a><span class="k">def</span> <span class="nf">fill_ax</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_train</span> <span class="o">@</span> <span class="n">s</span> <span class="o">-</span> <span class="n">mu</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_val</span> <span class="o">@</span> <span class="n">s</span> <span class="o">-</span> <span class="n">mu</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_test</span> <span class="o">@</span> <span class="n">s</span> <span class="o">-</span> <span class="n">mu</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">data_val</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;train-&gt;val&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">data_test</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;val-&gt;test&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">data_train</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_test</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
+        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="s2">&quot;k--&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;constraint&quot;</span><span class="p">,</span>
+        <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">data_train</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_test</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="n">n_nonzero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;mu=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;, |s|=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">n_nonzero</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span></div>
+
+
+<span class="c1"># def get_realized_covs(R):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     param R: numpy array where rows are vector of asset returns for t=0,1,...</span>
+<span class="c1">#         R has shape (T, n) where T is the number of days and n is the number of assets</span>
+
+<span class="c1">#     returns: (numpy array) list of r_t*r_t&#39; (matrix multiplication) for all days, i.e,</span>
+<span class="c1">#         &quot;daily realized covariances&quot;</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     T = R.shape[0]</span>
+<span class="c1">#     n = R.shape[1]</span>
+<span class="c1">#     R = R.reshape(T,n,1)</span>
+
+<span class="c1">#     return R @ R.transpose(0,2,1)</span>
+
+
+<span class="c1"># def get_next_ewma(EWMA, y_last, t, beta):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     param EWMA: EWMA at time t-1</span>
+<span class="c1">#     param y_last: observation at time t-1</span>
+<span class="c1">#     param t: current time step</span>
+<span class="c1">#     param beta: EWMA exponential forgetting parameter</span>
+
+<span class="c1">#     returns: EWMA estimate at time t (note that this does not depend on y_t)</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+
+<span class="c1">#     old_weight = (beta-beta**t)/(1-beta**t)</span>
+<span class="c1">#     new_weight = (1-beta) / (1-beta**t)</span>
+
+<span class="c1">#     return old_weight*EWMA + new_weight*y_last</span>
+
+<span class="c1"># def get_ewmas(y, T_half):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     y: array with measurements for times t=1,2,...,T=len(y)</span>
+<span class="c1">#     T_half: EWMA half life</span>
+
+<span class="c1">#     returns: list of EWMAs for times t=2,3,...,T+1 = len(y)</span>
+
+
+<span class="c1">#     Note: We define EWMA_t as a function of the</span>
+<span class="c1">#     observations up to time t-1. This means that</span>
+<span class="c1">#     y = [y_1,y_2,...,y_T] (for some T), while</span>
+<span class="c1">#     EWMA = [EWMA_2, EWMA_3, ..., EWMA_{T+1}]</span>
+<span class="c1">#     This way we don&#39;t get a &quot;look-ahead bias&quot; in the EWMA</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+
+<span class="c1">#     beta = np.exp(-np.log(2)/T_half)</span>
+<span class="c1">#     EWMA_t = 0</span>
+<span class="c1">#     EWMAs = []</span>
+<span class="c1">#     for t in range(1,y.shape[0]+1): # First EWMA is for t=2</span>
+<span class="c1">#         y_last = y[t-1] # Note zero-indexing</span>
+<span class="c1">#         EWMA_t = get_next_ewma(EWMA_t, y_last, t, beta)</span>
+<span class="c1">#         EWMAs.append(EWMA_t)</span>
+<span class="c1">#     return np.array(EWMAs)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

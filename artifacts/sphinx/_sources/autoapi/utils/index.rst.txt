@@ -1,0 +1,35 @@
+:py:mod:`utils`
+===============
+
+.. py:module:: utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   utils.plot_all_portfolios
+   utils.determine_n_plots
+   utils.fill_ax
+
+
+
+.. py:function:: plot_all_portfolios(stat_arbs, data_train, data_val, data_test)
+
+   param stat_arbs: list of StatArb objects
+   param data_train: pandas dataframe with training data
+   param data_val: pandas dataframe with validation data
+   param data_test: pandas dataframe with test data
+
+
+.. py:function:: determine_n_plots(candidate_stat_arbs, data_val, cutoff)
+
+
+.. py:function:: fill_ax(ax, data_train, data_val, data_test, s, mu, c)
+
+

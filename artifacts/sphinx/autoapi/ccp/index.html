@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ccp &mdash; cvxmarkowitz Documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/logo.jpeg"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="utils" href="../utils/index.html" />
+    <link rel="prev" title="API Reference" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> cvxmarkowitz
+            <img src="../../_static/logo.jpeg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ccp</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">utils</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backtest/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backtest</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">cvxmarkowitz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">API Reference</a> &raquo;</li>
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">ccp</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/autoapi/ccp/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ccp">
+<span id="ccp"></span><h1><a class="reference internal" href="#module-ccp" title="ccp"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ccp</span></code></a><a class="headerlink" href="#module-ccp" title="Permalink to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ccp.State_vectorized" title="ccp.State_vectorized"><code class="xref py py-obj docutils literal notranslate"><span class="pre">State_vectorized</span></code></a></p></td>
+<td><p>Helper class for constructing stat arb using the convex-concave procedure        in a vectorized manner</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ccp._State" title="ccp._State"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_State</span></code></a></p></td>
+<td><p>Helper class for constructing stat arb using the convex-concave procedure</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ccp.StatArbGroup" title="ccp.StatArbGroup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StatArbGroup</span></code></a></p></td>
+<td><p>Stores a group of stat arb objects</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ccp.StatArb" title="ccp.StatArb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StatArb</span></code></a></p></td>
+<td><p>Stat arb class</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ccp.StatArbPortfolioManager" title="ccp.StatArbPortfolioManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StatArbPortfolioManager</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ccp.evaluate_solver" title="ccp.evaluate_solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_solver</span></code></a>(prices, P_max, spread_max, solver, seed=1, M=None)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ccp.construct_stat_arbs" title="ccp.construct_stat_arbs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">construct_stat_arbs</span></code></a>(prices, K=1, P_max=None, spread_max=1, s_init=None, mu_init=None, seed=None, M=None, solver='MOSEK', verbose=True)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ccp.construct_stat_arb_helper" title="ccp.construct_stat_arb_helper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">construct_stat_arb_helper</span></code></a>(args)</p></td>
+<td><p>Call this when using of imap_unordered in multiprocessing</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ccp.construct_stat_arb" title="ccp.construct_stat_arb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">construct_stat_arb</span></code></a>(prices, P_max=None, spread_max=1, s_init=None, mu_init=None, seed=None, M=None, solver='MOSEK')</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="ccp.evaluate_solver">
+<span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">evaluate_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spread_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#evaluate_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.evaluate_solver" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ccp.construct_stat_arbs">
+<span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">construct_stat_arbs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spread_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MOSEK'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#construct_stat_arbs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.construct_stat_arbs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ccp.construct_stat_arb_helper">
+<span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">construct_stat_arb_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#construct_stat_arb_helper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.construct_stat_arb_helper" title="Permalink to this definition"></a></dt>
+<dd><p>Call this when using of imap_unordered in multiprocessing</p>
+<p>param args: tuple of arguments to pass to construct_stat_arb</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ccp.construct_stat_arb">
+<span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">construct_stat_arb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spread_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MOSEK'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#construct_stat_arb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.construct_stat_arb" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ccp.State_vectorized">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">State_vectorized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spread_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#State_vectorized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.State_vectorized" title="Permalink to this definition"></a></dt>
+<dd><p>Helper class for constructing stat arb using the convex-concave procedure        in a vectorized manner</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.State_vectorized.assets">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#State_vectorized.assets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.State_vectorized.assets" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.State_vectorized.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#State_vectorized.shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.State_vectorized.shape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.State_vectorized.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#State_vectorized.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.State_vectorized.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Resets to random feasible point</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.State_vectorized.iterate">
+<span class="sig-name descname"><span class="pre">iterate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MOSEK'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#State_vectorized.iterate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.State_vectorized.iterate" title="Permalink to this definition"></a></dt>
+<dd><p>Performs one iteration of the convex concave procedure</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.State_vectorized._get_grad_g">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_get_grad_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#State_vectorized._get_grad_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.State_vectorized._get_grad_g" title="Permalink to this definition"></a></dt>
+<dd><p>param pk: TxK array of current portfolio evolutions</p>
+<p>returns the gradients of g at pk</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.State_vectorized.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#State_vectorized.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.State_vectorized.build" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ccp._State">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">_State</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spread_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MOSEK'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#_State"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp._State" title="Permalink to this definition"></a></dt>
+<dd><p>Helper class for constructing stat arb using the convex-concave procedure</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp._State.assets">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#_State.assets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp._State.assets" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp._State.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#_State.shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp._State.shape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp._State.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#_State.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp._State.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Resets to random feasible point</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp._State.iterate">
+<span class="sig-name descname"><span class="pre">iterate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#_State.iterate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp._State.iterate" title="Permalink to this definition"></a></dt>
+<dd><p>Performs one iteration of the convex concave procedure</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp._State._get_grad_g">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_get_grad_g</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#_State._get_grad_g"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp._State._get_grad_g" title="Permalink to this definition"></a></dt>
+<dd><p>param pk: Tx1 array of current portfolio evolution</p>
+<p>returns the gradient of g at pk</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp._State.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#_State.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp._State.build" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ccp.StatArbGroup">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">StatArbGroup</span></span><a class="reference internal" href="../../_modules/ccp.html#StatArbGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbGroup" title="Permalink to this definition"></a></dt>
+<dd><p>Stores a group of stat arb objects</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ccp.StatArbGroup.stat_arbs">
+<span class="sig-name descname"><span class="pre">stat_arbs</span></span><em class="property"><span class="w"> </span><span class="pre">:list</span></em><a class="reference internal" href="../../_modules/ccp.html#StatArbGroup.stat_arbs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbGroup.stat_arbs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArbGroup.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArbGroup.metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbGroup.metrics" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArbGroup.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices_train_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SR_cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArbGroup.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbGroup.validate" title="Permalink to this definition"></a></dt>
+<dd><p>validates stat arbs on validation set (prices_val) and refits on
+train+validation (prices_train_val)</p>
+<p>param prices_val: validation set
+param prices_train_val: train+validation set
+param cutoff: max deviance from stat arb mean
+param SR_cutoff: cutoff for sharpe ratio</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArbGroup.construct_porfolio">
+<span class="sig-name descname"><span class="pre">construct_porfolio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArbGroup.construct_porfolio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbGroup.construct_porfolio" title="Permalink to this definition"></a></dt>
+<dd><p>Constructs portfolio from stat arbs</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ccp.StatArb">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">StatArb</span></span><a class="reference internal" href="../../_modules/ccp.html#StatArb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb" title="Permalink to this definition"></a></dt>
+<dd><p>Stat arb class</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ccp.StatArb.assets">
+<span class="sig-name descname"><span class="pre">assets</span></span><em class="property"><span class="w"> </span><span class="pre">:dict</span></em><a class="reference internal" href="../../_modules/ccp.html#StatArb.assets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.assets" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ccp.StatArb.mu">
+<span class="sig-name descname"><span class="pre">mu</span></span><em class="property"><span class="w"> </span><span class="pre">:float</span></em><a class="reference internal" href="../../_modules/ccp.html#StatArb.mu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.mu" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.__setitem__">
+<span class="sig-name descname"><span class="pre">__setitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">__name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">__value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/ccp.html#StatArb.__setitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.__setitem__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/ccp.html#StatArb.__getitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.__getitem__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.items" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.evaluate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.refit">
+<span class="sig-name descname"><span class="pre">refit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.refit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.refit" title="Permalink to this definition"></a></dt>
+<dd><p>”
+returns refitted stat arb</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.s">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">s</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.s"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.s" title="Permalink to this definition"></a></dt>
+<dd><p>returns the vector of positions</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.asset_names">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">asset_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.asset_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.asset_names" title="Permalink to this definition"></a></dt>
+<dd><p>returns list of assets in StatArb</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.n">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.n"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.n" title="Permalink to this definition"></a></dt>
+<dd><p>returns the number of assets</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.get_q">
+<span class="sig-name descname"><span class="pre">get_q</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exit_last</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.get_q"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.get_q" title="Permalink to this definition"></a></dt>
+<dd><p>returns the vector of investments in stat arb based on trading strategy            q_t = mu - p_t until <a href="#id1"><span class="problematic" id="id2">|p_t-mu|</span></a> &lt;= cutoff                rest is zero</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.get_positions">
+<span class="sig-name descname"><span class="pre">get_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exit_last</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.get_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.get_positions" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>computes the positions of each individual asset over time            based on trading strategy                q_t = mu - p_t until <a href="#id3"><span class="problematic" id="id4">|p_t-mu|</span></a> &lt;= cutoff                rest is zero</dt><dd><p>positions = q_t*self.s</p>
+</dd>
+</dl>
+<p>returns Txn, pandas DataFrame</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SR_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.validate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArb.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exit_last</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArb.metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArb.metrics" title="Permalink to this definition"></a></dt>
+<dd><p>Computes metrics of stat arbs trading strategy            q_t = mu - p_t until <a href="#id5"><span class="problematic" id="id6">|p_t-mu|</span></a> &gt;= cutoff</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ccp.StatArbPortfolioManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ccp.</span></span><span class="sig-name descname"><span class="pre">StatArbPortfolioManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArbPortfolioManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbPortfolioManager" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArbPortfolioManager.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArbPortfolioManager.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbPortfolioManager.run" title="Permalink to this definition"></a></dt>
+<dd><p>rund backtest, managing a portfolio of stat arbs, looking for new stat arbs every update_freq days</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ccp.StatArbPortfolioManager.get_stat_arb_portfolios">
+<span class="sig-name descname"><span class="pre">get_stat_arb_portfolios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices_train</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ccp.html#StatArbPortfolioManager.get_stat_arb_portfolios"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ccp.StatArbPortfolioManager.get_stat_arb_portfolios" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>returns a list of stat arb portfolios</dt><dd><p>a stat arb portfolio is a StatArb class instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../utils/index.html" class="btn btn-neutral float-right" title="utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

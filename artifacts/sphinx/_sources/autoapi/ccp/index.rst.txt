@@ -1,0 +1,233 @@
+:py:mod:`ccp`
+=============
+
+.. py:module:: ccp
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   ccp.State_vectorized
+   ccp._State
+   ccp.StatArbGroup
+   ccp.StatArb
+   ccp.StatArbPortfolioManager
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ccp.evaluate_solver
+   ccp.construct_stat_arbs
+   ccp.construct_stat_arb_helper
+   ccp.construct_stat_arb
+
+
+
+.. py:function:: evaluate_solver(prices, P_max, spread_max, solver, seed=1, M=None)
+
+
+.. py:function:: construct_stat_arbs(prices, K=1, P_max=None, spread_max=1, s_init=None, mu_init=None, seed=None, M=None, solver='MOSEK', verbose=True)
+
+
+.. py:function:: construct_stat_arb_helper(args)
+
+   Call this when using of imap_unordered in multiprocessing
+
+   param args: tuple of arguments to pass to construct_stat_arb
+
+
+.. py:function:: construct_stat_arb(prices, P_max=None, spread_max=1, s_init=None, mu_init=None, seed=None, M=None, solver='MOSEK')
+
+
+.. py:class:: State_vectorized(prices, K, P_max=None, spread_max=1)
+
+   Helper class for constructing stat arb using the convex-concave procedure        in a vectorized manner
+
+   .. py:method:: assets(self)
+      :property:
+
+
+   .. py:method:: shape(self)
+      :property:
+
+
+   .. py:method:: reset(self)
+
+      Resets to random feasible point
+
+
+   .. py:method:: iterate(self, solver='MOSEK')
+
+      Performs one iteration of the convex concave procedure
+
+
+   .. py:method:: _get_grad_g(pk)
+      :staticmethod:
+
+      param pk: TxK array of current portfolio evolutions
+
+      returns the gradients of g at pk
+
+
+   .. py:method:: build(self)
+
+
+
+.. py:class:: _State(prices, P_max=None, spread_max=1, solver='MOSEK')
+
+   Helper class for constructing stat arb using the convex-concave procedure
+
+   .. py:method:: assets(self)
+      :property:
+
+
+   .. py:method:: shape(self)
+      :property:
+
+
+   .. py:method:: reset(self)
+
+      Resets to random feasible point
+
+
+   .. py:method:: iterate(self)
+
+      Performs one iteration of the convex concave procedure
+
+
+   .. py:method:: _get_grad_g(pk)
+      :staticmethod:
+
+      param pk: Tx1 array of current portfolio evolution
+
+      returns the gradient of g at pk
+
+
+   .. py:method:: build(self)
+
+
+
+.. py:class:: StatArbGroup
+
+   Stores a group of stat arb objects
+
+   .. py:attribute:: stat_arbs
+      :annotation: :list
+
+      
+
+   .. py:method:: metrics(self, prices: pandas.DataFrame, cutoff: float = 1)
+
+
+   .. py:method:: validate(self, prices_val: pandas.DataFrame, prices_train_val: pandas.DataFrame, cutoff: float = 1, SR_cutoff: float = 3)
+
+      validates stat arbs on validation set (prices_val) and refits on
+      train+validation (prices_train_val)
+
+      param prices_val: validation set
+      param prices_train_val: train+validation set
+      param cutoff: max deviance from stat arb mean
+      param SR_cutoff: cutoff for sharpe ratio
+
+
+   .. py:method:: construct_porfolio(self, prices: pandas.DataFrame, cutoff: float = 1)
+
+      Constructs portfolio from stat arbs
+
+
+
+.. py:class:: StatArb
+
+   Stat arb class
+
+   .. py:attribute:: assets
+      :annotation: :dict
+
+      
+
+   .. py:attribute:: mu
+      :annotation: :float
+
+      
+
+   .. py:method:: __setitem__(self, __name: int, __value: float) -> None
+
+
+   .. py:method:: __getitem__(self, key: int) -> float
+
+
+   .. py:method:: items(self)
+
+
+   .. py:method:: evaluate(self, prices: pandas.DataFrame)
+
+
+   .. py:method:: refit(self, prices: pandas.DataFrame)
+
+      "
+      returns refitted stat arb
+
+
+   .. py:method:: s(self)
+      :property:
+
+      returns the vector of positions
+
+
+   .. py:method:: asset_names(self)
+      :property:
+
+      returns list of assets in StatArb
+
+
+   .. py:method:: n(self)
+      :property:
+
+      returns the number of assets
+
+
+   .. py:method:: get_q(self, prices: pandas.DataFrame, cutoff, exit_last=True)
+
+      returns the vector of investments in stat arb based on trading strategy            q_t = mu - p_t until |p_t-mu| <= cutoff                rest is zero
+
+
+   .. py:method:: get_positions(self, prices: pandas.DataFrame, cutoff, exit_last=True)
+
+      computes the positions of each individual asset over time            based on trading strategy                q_t = mu - p_t until |p_t-mu| <= cutoff                rest is zero
+              positions = q_t*self.s
+
+      returns Txn, pandas DataFrame
+
+
+   .. py:method:: validate(self, prices, cutoff, SR_target=None)
+
+
+   .. py:method:: metrics(self, prices: pandas.DataFrame, cutoff: float = 1, exit_last: bool = True)
+
+      Computes metrics of stat arbs trading strategy            q_t = mu - p_t until |p_t-mu| >= cutoff
+
+
+
+.. py:class:: StatArbPortfolioManager(prices, start_date, end_date, train_len, val_len, test_len, P_max=10, n_candidates=100)
+
+   .. py:method:: run(self, update_freq=10)
+
+      rund backtest, managing a portfolio of stat arbs, looking for new stat arbs every update_freq days
+
+
+   .. py:method:: get_stat_arb_portfolios(self, prices_train)
+
+      returns a list of stat arb portfolios
+          a stat arb portfolio is a StatArb class instance
+
+
+
