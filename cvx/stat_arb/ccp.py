@@ -10,9 +10,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from cvx.stat_arb.metrics import Metrics
-from cvx.stat_arb.portfolio import build_portfolio
-
+from cvx.simulator.metrics import Metrics
+# from cvx.simulator.portfolio import bu
 
 def evaluate_solver(prices, P_max, spread_max, solver, seed=1, M=None):
     np.random.seed(seed)
