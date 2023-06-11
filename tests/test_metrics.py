@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 
 from cvx.simulator.metrics import Metrics
-from cvx.stat_arb.ccp import * 
+from cvx.stat_arb.ccp import *
+
 
 def test_profit(portfolio):
     m = Metrics(daily_profit=portfolio.profit.dropna())
