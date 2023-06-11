@@ -20,6 +20,10 @@ cvx/stat_arb/__pycache__/
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
+# Big data files
+.asset_data_2000_to_2023.csv
+.asset_data_2000_to_2023_full.csv
+
 # IPython
 profile_default/
 ipython_config.py

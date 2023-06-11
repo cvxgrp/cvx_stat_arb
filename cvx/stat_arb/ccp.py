@@ -7,9 +7,16 @@ import multiprocessing as mp
 from tqdm import tqdm, trange
 import time
 import pickle
+from sklearn.linear_model import Lasso
+
+import warnings
+warnings.filterwarnings("ignore")
+
+
 
 from cvx.simulator.metrics import Metrics
 from cvx.simulator.portfolio import EquityPortfolio
+from cvx.stat_arb.ar_model import ar
 
 with open('../data/sector_to_asset.pkl', 'rb') as f:
     sector_to_asset = pickle.load(f)
@@ -134,7 +141,10 @@ def _construct_stat_arb(
     P_max=None,
     spread_max=1,
     s_init=None,
+    s_init_orig=None,
     mu_init=None,
+    mu_init_orig=None,
+    assets_init=None,
     seed=None,
     M=None,
     **kwargs
@@ -142,13 +152,36 @@ def _construct_stat_arb(
     if seed is not None:
         np.random.seed(seed)
 
+    ### TODO: Test random porfolio construction; uncomment below
+    # Three random assets
+    # assets = np.random.choice(prices.columns, 3, replace=False)
+    # prices = prices[assets]
+    # P_bar = prices.mean(axis=0).values.reshape(-1, 1)
+    # s = np.random.normal(0, 1, (3, 1))
+    # s_at_P_bar = np.abs(s).T @ P_bar
+    # mu = np.abs(np.random.normal(0, 1))
+
+    # s_at_P_bar = np.abs(s).T @ P_bar
+    # s = s / s_at_P_bar * P_max  # scale s to be feasible
+
+    # scale = np.abs(prices.values @ s - mu).max()
+
+    # s = s / scale
+    # mu = mu / scale
+
+    # # print(mu)
+    # assets_dict = {assets[i]:s[i] for i in range(3)}
+
+    # stat_arb = StatArb(assets=assets_dict, mu=mu)
+    # return stat_arb
+
     # Drop nan columns in prices; allows for missing data
     prices = prices.dropna(axis=1)
 
+    ### TODO: How to choose M assets?
 
-    if M is not None:
+    # if M is not None:
         # Find M random assets
-        # TODO: how to choose M assets?
         # Sectors
         # Choose sector with probability proportional to number of assets in
         # sector
@@ -158,20 +191,33 @@ def _construct_stat_arb(
 
         
 
-
-        sector = np.random.choice(list(sector_to_asset.keys()), 1)[0]
-        assets = sector_to_asset[sector]
-        while len(assets)<M:
-            sector = np.random.choice(list(sector_to_asset.keys()), 1)[0]
+        # sector = np.random.choice(list(sector_to_asset.keys()), 1)[0]
+        # assets = sector_to_asset[sector]
+        # while len(assets)<M:
+        #     pass
+        #     sector = np.random.choice(list(sector_to_asset.keys()), 1)[0]
             # sector = np.random.choice(list(sector_to_asset.keys()), 1, p=sector_probs)[0]
-            assets += sector_to_asset[sector]
-            assets = list(set(assets))
-        if len(assets)>M:
-            assets = np.random.choice(assets, M, replace=False)
+        #     assets = sector_to_asset[sector]
 
+
+
+            # assets += sector_to_asset[sector]
+        #     assets = list(set(assets))
+        # if len(assets)>M:
+        #     assets = np.random.choice(assets, M, replace=False)
+
+        # TODO: Hardcode for Mining, Quarrying, and Oil and Gas Extraction
+        # assets = sector_to_asset['Manufacturing']
+        # assets = np.random.choice(assets, M, replace=False)
 
         # assets = np.random.choice(prices.columns, M, replace=False)
-        prices = prices[assets]
+        # prices = prices[assets]
+
+        # Chooose M assets from universe
+        # assets = np.random.choice(prices.columns, M, replace=False)
+        # assets = sector_to_asset["Manufacturing"]
+        # assets = np.random.choice(assets, M, replace=False)
+        # prices = prices[assets]
 
     # Scale prices; remember to scale back later
     P_bar = prices.mean(axis=0).values.reshape(-1, 1)
@@ -180,14 +226,29 @@ def _construct_stat_arb(
     state = _State(prices, P_max=P_max, spread_max=spread_max, **kwargs)
     if s_init is None or mu_init is None:
         state.reset()
+
+        s_times_P_bar = np.abs(state.s.value) * state.P_bar
+        s_at_P_bar = np.abs(state.s.value).T @ state.P_bar
+        non_zero_inds = np.where(np.abs(s_times_P_bar) > 1e-2 * s_at_P_bar)[0]
+
+        assets_init = prices.columns[non_zero_inds]
+        prices = prices.iloc[:,non_zero_inds]
+        P_bar = P_bar[non_zero_inds]
+
+        s_init = state.s_init[non_zero_inds]
+        mu_init = state.mu_init
+        state = _State(prices, P_max=state.P_max, spread_max=state.spread_max, s_init=s_init, mu_init=mu_init, assets_init=assets_init, **state.kwargs)
     else:
         state.s.value = s_init
         state.mu.value = mu_init
+        state.s_init = s_init_orig
+        state.mu_init = mu_init_orig
+        state.assets_init = assets_init
 
     obj_old, obj_new = 1, 10
     i = 0
     while np.linalg.norm(obj_new - obj_old) / obj_old > 1e-3: # and i < 2:
-        state.iterate()
+        state = state.iterate()
         if state.prob.status == "optimal":
             obj_old = obj_new
             obj_new = state.prob.value
@@ -214,7 +275,10 @@ def _construct_stat_arb(
             P_max=None,
             spread_max=spread_max,
             s_init=s_init,
+            s_init_orig=state.s_init,
             mu_init=mu_init,
+            mu_init_orig=state.mu_init,
+            assets_init=state.assets_init,
             seed=None,
             **kwargs
         )
@@ -231,13 +295,17 @@ class _State:
     Helper class for constructing stat arb using the convex-concave procedure
     """
 
-    def __init__(self, prices, P_max=None, spread_max=1, **kwargs):
+    def __init__(self, prices, P_max=None, spread_max=1, s_init=None, mu_init=None, assets_init=None, **kwargs):
         self.T, self.n = prices.shape
 
         self.P_max = P_max  # allow for P_max=None for second pass
         self.prices = prices
         self.spread_max = spread_max
+        self.s_init = s_init
+        self.mu_init = mu_init
+        self.assets_init = assets_init
         self.kwargs = kwargs
+
 
         self.construct_problem()
 
@@ -271,6 +339,9 @@ class _State:
         # self.prob.solve(solver=self.solver, verbose=False)
         self.prob.solve(**self.kwargs)
 
+        self.s.value = self.s_init
+        self.mu.value = self.mu_init
+
     @property
     def assets(self):
         return list(self.prices.columns)
@@ -283,6 +354,54 @@ class _State:
         """
         Resets to random feasible point
         """
+        ### Burte force cointegration init
+        # Select random column
+        i = np.random.choice(self.n)
+        pi = self.prices.iloc[:,i]
+        P_minusi = self.prices.drop(columns=self.assets[i])
+
+        # TODO: Hyperparameter
+        alpha = 0.00001
+        model = Lasso(alpha=alpha, fit_intercept=True, max_iter=1000)
+        model.fit(P_minusi, pi);
+
+        s_minusi = model.coef_.reshape(-1, 1)
+        s = np.insert(s_minusi, i, -1, axis=0)
+        mu = np.mean(pi - model.predict(P_minusi))
+
+        scale = np.abs(self.prices.values @ s - mu).max()
+
+        s = s / scale
+        mu = mu / scale
+
+        s_init_orig = s
+        mu_init_orig = mu
+
+        # self.s.value = s
+        # self.mu.value = mu
+        # self.s_init = s
+        # self.mu_init = self.mu
+
+        # nonzero_inds = np.abs(s) >= 0.01*np.max(np.abs(s))
+        # s = s[nonzero_inds]
+        # prices_new = self.prices.iloc[:, nonzero_inds]
+
+        # return _State(prices_new, P_max=self.P_max, spread_max=self.spread_max,s_init =s_init_orig, mu_init=mu_init_orig,  **self.kwargs)
+        self.s.value = s
+        self.mu.value = mu
+        self.s_init = s_init_orig
+        self.mu_init = mu_init_orig
+
+
+
+
+        # print((np.abs(model.coef_) >= 0.01*np.max(np.abs(model.coef_))).sum())
+
+
+
+
+
+        return
         s = np.random.normal(0, 1, (self.n, 1))
         s_at_P_bar = np.abs(s).T @ self.P_bar
         if self.P_max is not None:
@@ -340,7 +459,7 @@ class _State:
         Builds stat arb object
         """
         assets_dict = dict(zip(self.assets, self.s.value.flatten()))
-        stat_arb = StatArb(assets=assets_dict, mu=self.mu.value)
+        stat_arb = StatArb(assets=assets_dict, mu=self.mu.value, s_init=self.s_init, mu_init=self.mu_init, assets_init=self.assets_init)
 
         return stat_arb
 
@@ -378,8 +497,9 @@ class StatArbGroup:
         self,
         prices_val: pd.DataFrame,
         prices_train_val: pd.DataFrame,
-        cutoff: float = 1,
-        SR_cutoff: float = 3,
+        cutoff_up: float = 1,
+        cutoff_down: float = None,
+        SR_cutoff: float = None,
         profit_target = None,
         P_max: float = None,
     ):
@@ -399,20 +519,25 @@ class StatArbGroup:
             if (
                 set(stat_arb.asset_names) not in assets
             ):  # We don't want duplicates of the same stat arb TODO: is this check too harsh?
-                if stat_arb.validate(prices_val, cutoff, SR_cutoff, profit_target=profit_target):
-                    stat_arb_refit = stat_arb.refit(
-                        prices_train_val[stat_arb.asset_names],
-                        P_max=P_max
-                    )
+                if stat_arb.validate(prices_val, cutoff_up, cutoff_down, SR_cutoff, profit_target=profit_target):
+                    # TODO: refit or not???
+                    # TODO: Currently refits with spread_max=1
+                    # stat_arb_refit = stat_arb.refit(
+                    #     prices_train_val[stat_arb.asset_names],
+                    #     P_max=P_max
+                    # )
+                    stat_arb_refit = stat_arb
                     stat_arbs_success.append(stat_arb_refit)
                     assets.append(set(stat_arb.asset_names))
 
         return StatArbGroup(stat_arbs_success)
 
-    def construct_portfolio(self, prices: pd.DataFrame, cutoff: float = 1):
+    def construct_portfolio(self, prices: pd.DataFrame, cutoff_up: float = 1,\
+        cutoff_down: float=None, lin_increase=False):
         """
         Constructs portfolio from stat arbs
         """
+        cutoff_down = cutoff_down or cutoff_up
 
         # If no stat arbs, return None, i.e., no portfolio
         if not self.stat_arbs:
@@ -430,7 +555,8 @@ class StatArbGroup:
         # Add other stat arbs to portfolio
         for stat_arb in self.stat_arbs:
             prices_temp = prices[stat_arb.asset_names]
-            stocks = stat_arb.get_positions(prices_temp, cutoff=cutoff)
+            stocks = stat_arb.get_positions(prices_temp, cutoff_up, 
+            cutoff_down, lin_increase=lin_increase)
             if np.sum(stocks.values) == 0:
                 continue
             if portfolio is None:
@@ -450,6 +576,9 @@ class StatArb:
 
     assets: dict
     mu: float
+    s_init: float = None
+    mu_init: float = None
+    assets_init: list = None
 
     def __setitem__(self, __name: int, __value: float) -> None:
         self.assets[__name] = __value
@@ -466,12 +595,12 @@ class StatArb:
             value += prices[asset] * position
         return value
 
-    def refit(self, prices: pd.DataFrame, P_max=None):
+    def refit(self, prices: pd.DataFrame, P_max=None, spread_max=1):
         """ 
         returns refitted stat arb
         """
 
-        return _construct_stat_arb(prices, s_init=self.s, mu_init=self.mu, P_max=P_max)
+        return _construct_stat_arb(prices, s_init=self.s, mu_init=self.mu, P_max=P_max, spread_max=spread_max)
 
     @property
     def s(self):
@@ -494,26 +623,130 @@ class StatArb:
         """
         return len(self.assets)
 
-    def get_q(self, prices: pd.DataFrame, cutoff, exit_last=True):
+    @staticmethod
+    def q_nonlinear(adj_prices):
+        """
+        Enters position +1 if adj_prices < 0.25,
+        exits when adj_price crosses zero
+        enters position -1 if adj_prices > 0.75,
+        exits when adj_price crosses zero
+        """
+        q = np.zeros(len(adj_prices))
+        q[adj_prices < -0.75] = 1
+        q[adj_prices > 0.75] = -1
+
+        return pd.Series(q, index=adj_prices.index)
+
+    @staticmethod
+    def q_pwl(adj_prices):
+        """
+        Enters position 3*adj_prices+3 if adj_prices < -0.75,
+        Enters position 3*adj_prices-3 if adj_prices > 0.75,
+        Enters -adj_prices if -0.75 <= adj_prices <= 0.75,
+        """
+        q = np.zeros(len(adj_prices))
+        q[adj_prices < -0.75] = 3 * adj_prices[adj_prices < -0.75] + 3
+        q[adj_prices > 0.75] = 3 * adj_prices[adj_prices > 0.75] - 3
+        q[(-0.75 <= adj_prices) & (adj_prices <= 0.75)] = -adj_prices[
+            (-0.75 <= adj_prices) & (adj_prices <= 0.75)
+        ]
+
+        return pd.Series(q, index=adj_prices.index)
+
+    @staticmethod
+    def q_fixed(adj_prices, N=1):
+        """
+        Enters position -adj_prices on first day if -1<=adj_prices<=1,
+        Hold this position for N days or until adj_prices crosses +-1
+        """
+        q = np.zeros(len(adj_prices))
+        q[0:N] = -adj_prices[0]
+
+        first_breach = np.where(np.abs(adj_prices) > 1)[0]
+        if len(first_breach) > 0:
+            q[first_breach[0] :] = 0
+        
+        return pd.Series(q, index=adj_prices.index)
+
+    @staticmethod
+    def q_trend(adj_prices, N=5):
+        """
+        Enter position -adj_prices if ajd_prices is above its N-day moving average
+        """
+        q = np.zeros(len(adj_prices))
+        rolling_mean = adj_prices.rolling(N).mean().shift(1)
+        
+        q[(adj_prices > rolling_mean) & (adj_prices<0)] = -adj_prices[
+            (adj_prices > rolling_mean) & (adj_prices<0)
+        ]
+      
+        q[(adj_prices < rolling_mean) & (adj_prices>0)] = -adj_prices[
+            (adj_prices < rolling_mean) & (adj_prices>0)
+        ]
+
+        # Fill between positive values
+        # Forward fill zeros
+        q[q==0] = np.nan
+        q = pd.Series(q).ffill()
+        q = q.fillna(0)
+
+
+
+
+        return pd.Series(q, index=adj_prices.index)
+
+
+    def get_q(self, prices: pd.DataFrame, cutoff_up, cutoff_down=None, exit_last=True, lin_increase=False, validate=False):
         """
         returns the vector of investments in stat arb based on trading strategy\
             q_t = mu - p_t until |p_t-mu| <= cutoff\
                 rest is zero
         """
+        cutoff_down = cutoff_down or cutoff_up
+
         p = self.evaluate(prices)
         q = self.mu - p
+
+        # return self.q_trend(p-self.mu)
+
+        # if not validate:
+        #     return self.q_fixed(p-self.mu)
+
+        # q = self.q_pwl(p-self.mu)
+
+        # TODO!!!
+        # q = self.q_nonlinear(p-self.mu)
+
+        
+
         q.name = "q"
-        breaches = np.where(np.abs(p - self.mu) >= cutoff)[0]
-        if len(breaches) == 0:
+        # breaches = np.where(np.abs(p - self.mu) >= cutoff)[0]
+        breaches_up = np.where(p - self.mu >= cutoff_up)[0]
+        breaches_down = np.where(p - self.mu <= -cutoff_down)[0]
+        # if len(breaches) == 0:
+        if len(breaches_up) ==0 and len(breaches_down) == 0:
             if exit_last:
                 q[-1] = 0
-            return q
         else:
-            first_breach = breaches[0]
+            if len(breaches_up)>0:
+                first_breach_up = breaches_up[0]
+            else:
+                first_breach_up = np.inf
+            if len(breaches_down)>0:
+                first_breach_down = breaches_down[0]
+            else:
+                first_breach_down = np.inf
+            
+            first_breach = min(first_breach_up, first_breach_down)
             q[first_breach:] = 0
-            return q
 
-    def get_positions(self, prices: pd.DataFrame, cutoff, exit_last=True):
+        if lin_increase:
+            proportions = 1-np.linspace(0, 1, len(q))
+            # proportions = np.minimum(proportions, 1)
+            q = q * proportions
+        return q
+
+    def get_positions(self, prices: pd.DataFrame, cutoff_up, cutoff_down=None, exit_last=True, lin_increase=False):
         """
         computes the positions of each individual asset over time\
             based on trading strategy\
@@ -523,15 +756,16 @@ class StatArb:
 
         returns Txn, pandas DataFrame
         """
+        cutoff_down = cutoff_down or cutoff_up
 
-        q = self.get_q(prices, cutoff, exit_last)
+        q = self.get_q(prices, cutoff_up, cutoff_down, exit_last, lin_increase=lin_increase)
         q = pd.concat([q] * self.n, axis=1)
         s = self.s
         positions = q * (s.T)
         positions.columns = self.asset_names
         return positions
 
-    def validate(self, prices, cutoff, SR_target=None, profit_target=None, return_target=10):
+    def validate(self, prices, cutoff_up, cutoff_down=None, SR_target=None, profit_target=None, return_target=10):
         """
         Validates stat arb on validation set (prices) and refits
 
@@ -539,25 +773,27 @@ class StatArb:
         param cutoff: max deviance from stat arb mean
         param SR_target: (minimum) target sharpe ratio over validation set
         """
+        cutoff_down = cutoff_down or cutoff_up
+
         ### Make sure at least two assets
         if self.n < 2:
             return False
-        
-        ### Make sure stat arb surives validation set
-        if self.get_q(prices, cutoff, exit_last=False)[-1]==0:
+
+        # alpha, _ = ar(self, prices)
+        # if alpha >= 0.95:
+        #     return False
+
+        # Check that prices statys within bounds
+        adj_prices = self.evaluate(prices) - self.mu
+        if np.max(adj_prices) >= cutoff_up or np.min(adj_prices) <= -cutoff_down:
             return False
 
-        # prices_temp = prices[self.asset_names]
-        # stocks = self.get_positions(prices_temp, cutoff=cutoff)
-        # portfolio = EquityPortfolio(prices_temp, stocks=stocks, initial_cash=1)
-        # returns = portfolio.nav.pct_change().dropna()
 
-        # if returns.mean() * 252 < return_target:
-        #     return False
-        
+
+                
 
         ### Makes sure stat arb is profitable
-        m = self.metrics(prices, cutoff, exit_last=False)
+        m = self.metrics(prices, cutoff_up, cutoff_down, exit_last=True, validate=True)
         if m is None:
             return False
         
@@ -571,22 +807,23 @@ class StatArb:
         # High enough profit
         if profit_target is not None:
             # if m.total_profit < profit_target:
-            if m.total_profit < profit_target:
+            if m.total_profit <= profit_target:
                 return False
         
 
         return True
 
-    def metrics(self, prices: pd.DataFrame, cutoff: float = 1, exit_last: bool = True):
+    def metrics(self, prices: pd.DataFrame, cutoff_up: float = 1, cutoff_down=None, exit_last: bool = True, lin_increase=False, validate=False):
         """
         Computes metrics of stat arbs trading strategy\
             q_t = mu - p_t until |p_t-mu| >= cutoff
         """
+        cutoff_down = cutoff_down or cutoff_up
         # Get price evolution of portfolio
 
         p = self.evaluate(prices)
 
-        q = self.get_q(prices, cutoff, exit_last=exit_last)
+        q = self.get_q(prices, cutoff_up, cutoff_down, exit_last=exit_last, lin_increase=lin_increase, validate=validate)
         if q[0] == 0:  # We never enter a position
             return None
 
